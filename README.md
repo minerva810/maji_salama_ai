@@ -1,35 +1,43 @@
 # Maji Salama AI
 
-Maji Salama AI는 탄자니아 지역사회를 위한 AI 기반 지하수 안전 안내
-시스템입니다. 지하수 수질 측정값, 지질, 토양, 고도, 강우량 및 기타 환경
-데이터를 결합하여 불소 및 세균 오염 위험을 추정합니다.
+Maji Salama AI is an AI-powered groundwater safety guidance system
+designed for communities in Tanzania. It combines groundwater quality
+measurements, geology, soil, elevation, rainfall, and other
+environmental data to estimate fluoride and bacterial contamination
+risks.
 
-주민은 전화 앱에서 `*123#`와 같은 USSD 단축 코드를 입력해 서비스에
-접속합니다. 세션 기반 메뉴에서 `102`와 같은 등록 우물 ID를 입력하면
-요청이 백엔드로 전달됩니다. 백엔드는 해당 우물과 환경 특성을 조회하고,
-설정된 위험 예측 모델을 호출한 뒤 위험 등급을 판정합니다. 필요한 경우
-주변에서 위험도가 더 낮은 수원을 검색하고, 최종 식수 행동 지침을 USSD
-화면에 반환합니다.
+Residents access the service through a USSD short code such as `*123#`.
+A session-based menu asks the user to enter a registered well ID such as
+`102`. The backend then retrieves the well and environmental features,
+calls the configured risk model, classifies the result, searches for a
+lower-risk nearby water source when necessary, and returns concise
+drinking-water guidance within the USSD session.
 
-초기 MVP는 탄자니아 북부를 대상으로 하며, 향후 탄자니아 전역과
-동아프리카 열곡대로 확장하는 것을 목표로 합니다.
+The MVP focuses on northern Tanzania, with future expansion to other
+parts of Tanzania and the East African Rift Valley.
 
 ## Getting Started
 
-백엔드는 특정 AI 모델 구현에 직접 의존하지 않도록 설계합니다. 초기 개발
-단계에서는 Dummy 모델을 이용해 백엔드, 추천 엔진, USSD의 전체 흐름을
-먼저 구현하고 테스트한 뒤 최종 학습 모델로 교체할 수 있습니다.
+This section explains how to set up the project locally for development
+and testing.
+
+The backend is designed so that the AI model can be improved or replaced
+without changing the rest of the service. During early development, a
+dummy model can be used to test the complete backend, recommendation,
+and USSD flow before the final trained model is connected.
 
 ### Prerequisites
 
--   Python 3.11 이상
+Install the following software:
+
+-   Python 3.11 or later
 -   Git
 -   PostgreSQL
 -   PostGIS
--   Docker 및 Docker Compose 권장
--   `venv` 또는 Conda와 같은 Python 가상환경
+-   Docker and Docker Compose (recommended)
+-   A Python virtual environment such as `venv` or Conda
 
-주요 Python 패키지
+Core Python packages include:
 
 ``` text
 fastapi
@@ -47,29 +55,30 @@ pytest
 httpx
 ```
 
-End-to-End USSD 테스트를 위해 USSD Gateway 또는 이동통신사/통신
-Aggregator의 Sandbox 환경이 필요합니다. 개발 단계와 탄자니아 현장
-배포에서는 공급자와 Short Code 발급 방식이 달라질 수 있습니다.
+A USSD gateway or mobile-network/aggregator sandbox will be required for
+end-to-end USSD testing. The provider and short-code provisioning
+process may differ between development and the Tanzania pilot
+deployment.
 
 ### Installing
 
-저장소를 복제합니다.
+Clone the repository:
 
 ``` bash
 git clone <REPOSITORY_URL>
 cd maji-salama-ai
 ```
 
-가상환경을 생성하고 활성화합니다.
+Create and activate a virtual environment.
 
-Conda 사용:
+Using Conda:
 
 ``` bash
 conda create -n maji-salama python=3.11
 conda activate maji-salama
 ```
 
-또는 `venv` 사용:
+Or using `venv`:
 
 ``` bash
 python -m venv .venv
@@ -87,13 +96,13 @@ macOS/Linux:
 source .venv/bin/activate
 ```
 
-의존성을 설치합니다.
+Install the dependencies:
 
 ``` bash
 pip install -r requirements.txt
 ```
 
-로컬 환경 변수 파일을 생성합니다.
+Create the local environment file:
 
 ``` bash
 cp .env.example .env
@@ -105,7 +114,7 @@ Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-개발 환경 설정 예시는 다음과 같습니다.
+Example development configuration:
 
 ``` env
 APP_ENV=development
@@ -120,61 +129,60 @@ USSD_API_KEY=
 USSD_WEBHOOK_SECRET=
 ```
 
-`.env`, API Key, USSD 인증 정보 등의 비밀 정보는 Git에 커밋하지
-않습니다.
+Do not commit `.env`, API keys, USSD credentials, or other secrets.
 
-Docker Compose를 이용해 PostgreSQL/PostGIS를 실행합니다.
+Start PostgreSQL/PostGIS with Docker Compose:
 
 ``` bash
 docker compose up -d db
 ```
 
-데이터베이스 Migration을 적용합니다.
+Apply database migrations:
 
 ``` bash
 alembic upgrade head
 ```
 
-샘플 우물 및 환경 특성 데이터를 적재합니다.
+Load sample wells and environmental features:
 
 ``` bash
 python scripts/seed_wells.py
 python scripts/seed_features.py
 ```
 
-FastAPI 애플리케이션을 실행합니다.
+Run the FastAPI application:
 
 ``` bash
 uvicorn app.main:app --reload
 ```
 
-대화형 API 문서는 다음 주소에서 확인할 수 있습니다.
+Open the interactive API documentation:
 
 ``` text
 http://localhost:8000/docs
 ```
 
-기본 개발 데모의 처리 흐름은 다음과 같습니다.
+A simple development demo can follow this flow:
 
 ``` text
 *123#
     ↓
-USSD 메뉴
+USSD menu
     ↓
-우물 ID 입력: 102
+Enter Well ID: 102
     ↓
-우물 조회
+Well lookup
     ↓
-Dummy 또는 실제 위험 예측 모델
+Dummy or trained risk model
     ↓
-불소 / 세균 위험 등급 판정
+Fluoride / bacterial risk classification
     ↓
-위험도가 더 낮은 주변 수원 추천
+Lower-risk source recommendation
     ↓
-행동 지침 반환
+Guidance response
 ```
 
-API 결과 예시:
+Example API result:
 
 ``` json
 {
@@ -190,24 +198,25 @@ API 결과 예시:
 }
 ```
 
-### USSD 이용 흐름
+### USSD Interaction Flow
 
-MVP에서는 자유 형식 USSD 명령 대신 세션 기반 USSD 메뉴를 사용합니다.
+The MVP uses a session-based USSD menu rather than free-form USSD
+commands.
 
 ``` text
-사용자 입력: *123#
+User dials: *123#
         ↓
-1. 수원 확인
-2. 도움말
-3. 언어 설정
+1. Check water source
+2. Help
+3. Language
         ↓
-사용자 선택: 1
+User selects: 1
         ↓
-우물 ID를 입력하세요:
+Enter Well ID:
         ↓
-사용자 입력: 102
+User enters: 102
         ↓
-백엔드 Guidance 요청
+Backend guidance request
         ↓
 Well 102
 Fluoride: HIGH
@@ -216,12 +225,12 @@ Avoid long-term drinking.
 Lower-risk source: Well 108, 1.4 km.
 ```
 
-USSD Gateway는 통신 세션을 유지하고 사용자의 각 메뉴 선택을 FastAPI
-Webhook으로 전달합니다. 핵심 백엔드는 통신 채널과 분리하며, USSD
-Adapter가 세션 입력을 일반 Guidance 요청으로 변환하고 결과를 USSD 화면에
-맞게 포맷합니다.
+The USSD gateway maintains the telecom session and forwards each user
+selection to the FastAPI webhook. The core backend remains
+channel-independent: a USSD adapter converts session input into a normal
+guidance request and formats the result for the USSD screen.
 
-주민에게 표시되는 USSD 결과 예시:
+Example resident-facing USSD result:
 
 ``` text
 Well 102
@@ -234,25 +243,25 @@ AI estimate.
 
 ## Running the Tests
 
-전체 자동화 테스트는 다음 명령으로 실행합니다.
+Run all automated tests with:
 
 ``` bash
 pytest
 ```
 
-단위 테스트만 실행:
+Run unit tests only:
 
 ``` bash
 pytest tests/unit
 ```
 
-통합 테스트만 실행:
+Run integration tests only:
 
 ``` bash
 pytest tests/integration
 ```
 
-Coverage 확인:
+Run tests with coverage:
 
 ``` bash
 pytest --cov=app --cov-report=term-missing
@@ -260,85 +269,88 @@ pytest --cov=app --cov-report=term-missing
 
 ### Break down into end-to-end tests
 
-End-to-End 테스트는 개별 함수가 아니라 실제 서비스의 전체 처리 흐름을
-검증합니다.
+End-to-end tests verify the complete service flow rather than a single
+function.
 
-중요한 테스트 시나리오는 다음과 같습니다.
+Important scenarios include:
 
--   정상 우물 조회
--   존재하지 않는 우물 ID
--   높은 불소 위험
--   높은 세균 위험
--   불소와 세균이 동시에 높은 경우
--   환경 특성 누락
--   비활성 또는 폐쇄 우물
--   주변에 위험도가 더 낮은 수원이 없는 경우
--   AI 모델 추론 실패
--   잘못된 USSD 메뉴 또는 우물 ID 입력
--   USSD Webhook 중복 요청
--   모델 버전 교체 및 롤백
+-   valid well lookup
+-   unknown well ID
+-   high fluoride risk
+-   high bacterial risk
+-   simultaneous fluoride and bacterial risks
+-   missing environmental features
+-   inactive or closed wells
+-   no lower-risk source available nearby
+-   AI model inference failure
+-   invalid USSD menu or well-ID input
+-   duplicate USSD webhook request
+-   model version replacement or rollback
 
-End-to-End 흐름 예시는 다음과 같습니다.
+Example end-to-end flow:
 
 ``` text
-USSD 요청: Well ID 102
+USSD request: Well ID 102
         ↓
-USSD Webhook
+USSD webhook
         ↓
-우물 및 환경 특성 조회
+Well and feature lookup
         ↓
-위험 예측 모델 추론
+Risk model inference
         ↓
-Risk Policy
+Risk policy
         ↓
-추천 엔진
+Recommendation engine
         ↓
-USSD 응답 생성
+USSD response generation
 ```
 
-서비스는 구조화된 안전 안내를 반환해야 하며, 현재 수원보다 위험도가
-낮다고 판단할 근거가 없는 수원을 추천해서는 안 됩니다.
+The expected result is that the service returns safe, structured
+guidance and does not recommend a source that is not demonstrably
+lower-risk.
 
 ### And coding style tests
 
-변경사항을 병합하기 전에 코드 품질 검사를 수행하는 것을 권장합니다.
+Code-quality checks should be run before merging changes.
 
-권장 도구:
+Recommended tools include:
 
 ``` bash
 ruff check .
 ruff format --check .
 ```
 
-정적 타입 검사를 사용하는 경우:
+If static type checking is enabled:
 
 ``` bash
 mypy app
 ```
 
-이 검사는 3인 팀이 작성한 코드의 포맷, import, 일반적인 Python 오류 및
-타입 사용을 일관되게 유지하기 위한 것입니다.
+These checks are intended to keep formatting, imports, common Python
+errors, and type usage consistent across the three-person development
+team.
 
 ## Deployment
 
-백엔드는 PostgreSQL/PostGIS와 함께 컨테이너화된 FastAPI 애플리케이션으로
-배포하는 것을 기본 구조로 합니다.
+The backend is intended to run as a containerized FastAPI application
+with PostgreSQL/PostGIS.
 
-운영 배포 환경의 후보는 다음과 같습니다.
+A production-oriented deployment can use:
 
--   Google Cloud Run, AWS, Azure, Render, Railway 등의 컨테이너 플랫폼
--   PostGIS를 지원하는 Managed PostgreSQL
--   세션 Webhook을 지원하는 USSD Gateway 또는 이동통신사/통신 Aggregator
-    연동
--   인증 정보를 위한 환경 변수 또는 Secret Manager
--   애플리케이션·예측 로그 중앙 관리
+-   Google Cloud Run, AWS, Azure, Render, Railway, or another container
+    platform
+-   Managed PostgreSQL with PostGIS support
+-   A USSD gateway or mobile-network/aggregator integration supporting
+    session webhooks
+-   Environment variables or a secret manager for credentials
+-   Centralized application and prediction logging
 
-기본 배포 구조는 다음과 같습니다.
+The basic deployment architecture is:
 
 ``` text
-주민
+Resident
    ↓ *USSD#
-USSD Gateway / 이동통신망
+USSD Gateway / Mobile Network
    ↓ Session Webhook
 FastAPI Backend
    ├── Risk Model Adapter
@@ -349,43 +361,47 @@ FastAPI Backend
 PostgreSQL / PostGIS
 ```
 
-AI 모델은 백엔드 비즈니스 로직과 별도로 버전 관리합니다. 새 모델은 기존
-입력·출력 계약을 유지해야 하며, 이를 통해 USSD 또는 추천 인터페이스를
-변경하지 않고 `fluoride_v1`을 새로운 모델 버전으로 교체할 수 있습니다.
+AI models are versioned separately from backend business logic. A new
+model should implement the same input/output contract so that the
+service can replace `fluoride_v1` with a later model without changing
+the USSD or recommendation interfaces.
 
-실제 현장 파일럿 전에 탄자니아 USSD Short Code 접속 및 세션 전달,
-데이터베이스 백업, 모델 롤백, 모니터링, 개인정보 보호 및 현장 검증
-절차를 확인해야 합니다.
+Before a production pilot, the team should verify USSD short-code access
+and session delivery in Tanzania, database backups, model rollback,
+monitoring, data privacy, and field-validation procedures.
 
 ## Built With
 
--   [FastAPI](https://fastapi.tiangolo.com/) - 백엔드 API 프레임워크
--   [PostgreSQL](https://www.postgresql.org/) - 관계형 데이터베이스
--   [PostGIS](https://postgis.net/) - 공간 검색 및 주변 수원 탐색
--   [GeoPandas](https://geopandas.org/) - 공간 데이터 전처리 및 Feature
-    통합
--   [scikit-learn](https://scikit-learn.org/) - 머신러닝 모델 개발 및
-    추론
--   [Docker](https://www.docker.com/) - 재현 가능한 개발·배포 환경
--   USSD Gateway / 이동통신망 연동 - 주민 대상 세션형 메뉴 제공
+-   [FastAPI](https://fastapi.tiangolo.com/) - Backend API framework
+-   [PostgreSQL](https://www.postgresql.org/) - Relational database
+-   [PostGIS](https://postgis.net/) - Spatial queries and nearby
+    water-source search
+-   [GeoPandas](https://geopandas.org/) - Geospatial preprocessing and
+    feature integration
+-   [scikit-learn](https://scikit-learn.org/) - Machine-learning model
+    development and inference
+-   [Docker](https://www.docker.com/) - Reproducible development and
+    deployment environment
+-   USSD Gateway / Mobile Network Integration - Session-based menu
+    access for residents
 
 ## Contributing
 
-본 프로젝트는 3인 팀이 기능 단위 태스크와 Pull Request를 이용해
-개발합니다.
+The project is developed by a three-person team using feature-based
+tasks and pull requests.
 
-권장 개발 절차는 다음과 같습니다.
+Recommended workflow:
 
-1.  태스크를 생성하거나 선택합니다.
-2.  태스크의 입력, 출력, 의존성, 완료 조건을 정의합니다.
-3.  짧게 유지되는 기능 브랜치를 생성합니다.
-4.  기능과 테스트를 구현합니다.
-5.  `develop` 브랜치로 Pull Request를 생성합니다.
-6.  최소 한 명의 팀원에게 리뷰를 요청합니다.
-7.  병합 전 통합 테스트를 실행합니다.
-8.  안정적인 배포 버전은 `develop`에서 `main`으로 병합합니다.
+1.  Create or select a task.
+2.  Define its input, output, dependencies, and completion criteria.
+3.  Create a short-lived feature branch.
+4.  Implement the feature and tests.
+5.  Open a pull request to `develop`.
+6.  Request review from at least one teammate.
+7.  Run integration tests before merging.
+8.  Merge stable releases from `develop` into `main`.
 
-브랜치 예시:
+Example branches:
 
 ``` text
 feature/well-api
@@ -396,17 +412,19 @@ feature/model-adapter
 fix/ussd-session-parser
 ```
 
-`.env`, 인증 정보, 불필요한 개인 전화번호 또는 가입자 식별정보, 승인되지
-않은 대용량 데이터셋 또는 모델 Artifact는 Git에 커밋하지 않습니다.
+Never commit `.env` files, credentials, unnecessary personal phone
+numbers or subscriber identifiers, or unapproved large datasets/model
+artifacts.
 
-프로젝트 전용 기여 가이드가 추가되면 `CONTRIBUTING.md`를 참고합니다.
+Please see `CONTRIBUTING.md` when a project-specific contribution guide
+is added.
 
 ## Versioning
 
-애플리케이션은 Semantic Versioning 방식으로 관리하고,
-데이터셋·Feature·AI 모델은 각각 독립적으로 버전을 관리합니다.
+The project uses semantic-style application versioning together with
+independent dataset, feature, and model versions.
 
-예시:
+Examples:
 
 ``` text
 Application: v0.1.0
@@ -416,28 +434,136 @@ Fluoride model: fluoride_rf_v1
 Bacterial model: bacterial_rule_v1
 ```
 
-각 예측 결과에는 사용한 모델과 Feature 버전을 기록해야 합니다.
+Each prediction should record the model and feature versions that
+produced it.
 
-사용 가능한 애플리케이션 버전은 저장소의 tag를 통해 관리합니다.
+For available application releases, see the repository tags.
 
 ## Authors
-- A
-- B
-- C
+
+Maji Salama AI is developed by a three-person project team.
+
+-   **Team Member 1** - Data integration, AI modelling, and model
+    interface
+-   **Team Member 2** - Backend, database, and recommendation engine
+-   **Team Member 3** - USSD integration, service validation, and
+    administrative interface
+
+Replace the placeholders above with team members' names and GitHub
+profiles before public release.
 
 ## License
 
-프로젝트 라이선스는 아직 확정되지 않았습니다.
+The project license has not yet been finalized.
 
-외부 공개 전 적절한 라이선스를 선택하고 `LICENSE` 또는 `LICENSE.md`
-파일을 추가한 뒤 이 섹션을 수정합니다.
+Before public release, add the selected license and update this section
+to reference the corresponding `LICENSE` or `LICENSE.md` file.
 
 ## Acknowledgments
 
--   연구 및 모델 개발에 활용되는 공개 지질·토양·기후·수질 데이터 제공
-    기관
--   프로젝트 데이터셋 구축에 참고되는 불소 및 지하수 관련 연구자와 공개
-    연구 자료
--   향후 현장 검증에 참여할 지역사회, 수도 담당자 및 협력 기관
--   FastAPI, PostgreSQL/PostGIS, GeoPandas, scikit-learn 및 관련
-    오픈소스 프로젝트 기여자
+-   Open geological, soil, climate, and water-quality data providers
+    used for research and model development
+-   Researchers whose published fluoride and groundwater studies support
+    the project dataset
+-   Communities, water officers, and field partners who may support
+    future validation
+-   Open-source contributors to FastAPI, PostgreSQL/PostGIS, GeoPandas,
+    scikit-learn, and related tools
+
+
+## folder structure
+maji-salama-ai/
+│
+├── app/                            # 백엔드 애플리케이션
+│   ├── api/                        # REST API 엔드포인트
+│   │   ├── wells.py                # 우물 조회/등록
+│   │   ├── predictions.py          # 수질 위험 예측 API
+│   │   └── guidance.py             # 안전 수원/행동 권고 API
+│   │
+│   ├── schemas/                    # API용 Pydantic 입출력 모델
+│   │   ├── well.py
+│   │   ├── environment.py
+│   │   ├── water_quality.py
+│   │   ├── model_input.py
+│   │   ├── model_output.py
+│   │   └── guidance.py   
+│   │
+│   ├── services/                   # 핵심 비즈니스 로직
+│   │   ├── prediction_service.py   # AI 모델 호출 및 결과 처리
+│   │   ├── risk_service.py         # LOW/MEDIUM/HIGH 위험도 판정
+│   │   └── guidance_service.py     # 행동/안전 수원 추천
+│   │
+│   ├── ml/                         # 백엔드 ↔ AI 모델 연결 계층
+│   │   ├── model_adapter.py        # 공통 모델 인터페이스
+│   │   └── model_loader.py         # 모델 artifact 로딩
+│   │
+│   ├── db/                         # PostgreSQL/PostGIS 연결 및 DB 모델
+│   │
+│   ├── ussd/                       # USSD 요청/세션/응답 처리
+│   │   ├── handler.py
+│   │   └── session.py
+│   │
+│   ├── templates/                  # 사용자 안내 메시지
+│   │   ├── en/
+│   │   └── sw/                     # Swahili
+│   │
+│   ├── core/                       # 환경설정, 로깅, 공통 예외
+│   │
+│   └── main.py                     # FastAPI 실행 진입점
+│
+├── models/                         # AI 모델 개발 영역
+│   ├── training/                   # 모델 학습 코드
+│   └── evaluation/                 # 모델 평가 코드
+│
+├── model_artifacts/                # 학습 완료된 배포용 모델 패키지
+│   ├── fluoride/
+│   │   └── v1/
+│   │       ├── model.joblib
+│   │       ├── inference.py
+│   │       ├── feature_schema.json
+│   │       ├── metadata.json
+│   │       ├── sample_input.json
+│   │       ├── sample_output.json
+│   │       └── evaluation.json
+│   │
+│   └── bacterial/
+│       └── v1/
+│
+├── schemas/                        # 시스템 전체의 공식 데이터 계약(JSON Schema)
+│   ├── well.schema.json
+│   ├── environment.schema.json
+│   ├── water_quality.schema.json
+│   ├── model_input.schema.json
+│   └── model_output.schema.json
+│
+├── data/                           # 모델 개발용 데이터
+│   ├── raw/                        # 원본 데이터 (수정 금지)
+│   ├── interim/                    # 중간 전처리 결과
+│   ├── processed/                  # 최종 학습용 데이터
+│   ├── sample/                     # 테스트/예제용 소규모 데이터
+│   └── README.md                   # 데이터 출처 및 컬럼 설명
+│
+├── scripts/                        # 데이터 처리/모델 실행 등 보조 스크립트
+│
+├── tests/
+│   ├── unit/                       # 함수/서비스 단위 테스트
+│   ├── integration/                # DB·모델·API 연결 테스트
+│   └── end_to_end/                 # USSD → 예측 → 응답 전체 테스트
+│
+├── notebooks/                      # EDA 및 모델 실험 노트북
+│
+├── docs/
+│   ├── architecture/               # 시스템 아키텍처 문서
+│   └── contracts/                  # AI ↔ Backend 인터페이스 설명
+│
+├── alembic/                        # DB migration
+│
+├── README.md                       # 프로젝트 소개 (EN)
+├── README_KO.md                    # 프로젝트 소개 (KO)
+├── PROJECT_STRUCTURE.md            # 폴더 구조/개발 규칙
+├── CONTRIBUTING.md                 # 팀 협업 규칙
+├── requirements.txt                # Python dependencies
+├── .env.example                    # 환경변수 예시
+├── .gitignore
+├── Dockerfile
+└── docker-compose.yml
